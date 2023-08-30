@@ -2,42 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\PageService;
+use App\Http\Requests\UpdatePageRequest;
 
 class PageController extends Controller
 {
-    protected $pageService;
+    protected $pageService, $documentController;
 
     public function __construct()
     {
         $this->pageService = new PageService();
+        $this->documentController = new DocumentController();
     }
 
     public function index()
     {
         $pageData = $this->pageService->all();
-        // dd($pageData->first()->title);
-        return view('home', compact('pageData'));
+        $documents = $this->documentController->all();
+        return view('home', compact('pageData', 'documents'));
     }
 
     public function edit()
     {
         $pageData = $this->pageService->all();
-        return view('cms', compact('pageData'));
+        $documents = $this->documentController->all();
+        return view('cms', compact('pageData', 'documents'));
     }
 
-    public function update(int $id, Request $request)
+    public function update(int $id, UpdatePageRequest $request)
     {
         $input = $request->all();
-        if($request->hasFile('image'))
-        {
-            $destination_path = 'public/images';
-            $image = $request->file('image');
-            $image_name = 'thumb';
-            $extension = $image->extension();
-            $path = $request->file('image')->storeAs($destination_path, "$image_name." . "$extension");
-            $input['image'] = "$image_name." . "$extension";
+
+        if($request->hasFile('image')) {
+            $input = $this->pageService->saveImage($request, $input);
         }
 
         $this->pageService->update($id, $input);
@@ -46,18 +43,14 @@ class PageController extends Controller
             ->with('status', 'Atualizado com sucesso!');
     }
 
-    public function create(Request $request)
+    public function create(UpdatePageRequest $request)
     {
-        if($request->hasFile('image'))
-        {
-            $destination_path = 'public/images';
-            $image = $request->file('image');
-            $image_name = 'thumb';
-            $path = $request->file('image')->storeAs($destination_path, $image_name);
-            $request->all()['image'] = $image_name;
+        $input = $request->all();
+        if($request->hasFile('image')) {
+            $input = $this->pageService->saveImage($request, $input);
         }
 
-        $this->pageService->create($request->all());
+        $this->pageService->create($input);
         return redirect()
             ->back()
             ->with('status', 'Criado com sucesso!');

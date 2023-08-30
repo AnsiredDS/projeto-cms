@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,19 +28,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::group(['middleware' => ['auth', 'verified']], function()
-{
-    Route::get('/', [PageController::class, 'index'])->name('index');
+Route::get('/', [PageController::class, 'index'])->name('index');
 
+Route::group(['middleware' => ['auth', 'verified']], function() {
     Route::group(['as' => 'cms.', 'prefix' => 'cms'], function() {
-        // Route::get('/', function () {
-        //     return view('cms');
-        // })->name('edit');
         Route::post('/create', [PageController::class, 'create'])->name('create');
         Route::put('/update/{id}', [PageController::class, 'update'])->name('update');
-        Route::get('/', [PageController::class, 'edit'])->name('edit');
+        Route::get('/edit', [PageController::class, 'edit'])->name('edit');
     });
 
+    Route::group(['as' => 'document.', 'prefix' => 'document'], function() {
+        Route::post('/create', [DocumentController::class, 'create'])->name('create');
+        Route::put('/update/{id}', [DocumentController::class, 'update'])->name('update');
+        Route::get('/download/{name}', [DocumentController::class, 'download'])->name('download');
+        Route::delete('/destroy/{id}', [DocumentController::class, 'destroy'])->name('destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

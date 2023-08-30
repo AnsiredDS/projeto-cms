@@ -33,4 +33,23 @@ class PageService
     {
         return $this->model->create($data);
     }
+
+    public function saveImage($request, $input)
+    {
+        $image = $this->model->find($request->id);
+        //Verifica se o banco de dados possui uma imagem salva. Caso haja, deleta do storage
+        if(isset($image->image)) {
+            $name = $image->image;
+            $path = storage_path() .'\app\public\images\\'.$name;
+            unlink($path);
+        }
+
+        $destination_path = 'public/images';
+        $image = $request->file('image');
+        $image_name = 'thumb';
+        $extension = $image->extension();
+        $path = $request->file('image')->storeAs($destination_path, "$image_name." . "$extension");
+        $input['image'] = "$image_name." . "$extension";
+        return $input;
+    }
 }
